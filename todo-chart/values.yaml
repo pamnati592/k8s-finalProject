@@ -1,0 +1,33 @@
+replicaCount:
+  frontend: 1
+  backend: 1
+user: "Pam-Netanel"
+
+images:
+  backend: "ghcr.io/bennyro-mta/todos-api:1.2"
+  frontend: "ghcr.io/bennyro-mta/todolist-vue:latest"
+  database: "mariadb:10.6"
+
+service:
+  frontendType: LoadBalancer
+  backendType: ClusterIP
+
+database:
+  mysqlHost: "backend"
+  mysqlUser: "root"
+  mysqlPassword: ""
+  mysqlDb: "tododb"
+  mysqlTable: "todos"
+
+secret:
+  rootPassword: ""
+
+apiBaseUrl: "http://localhost:3001/todos"
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

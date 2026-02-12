@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "todo-chart.fullname" . }}-backend
+spec:
+  replicas: {{ .Values.replicaCount.backend }}
+  selector:
+    matchLabels:
+      app: todo-backend
+  template:
+    metadata:
+      labels:
+        app: todo-backend
+    spec:
+      initContainers:
+      - name: wait-for-db
+        image: busybox
+        command: ['sh', '-c', 'until nc -z {{ .Values.database.mysqlHost }} 3306; do echo waiting for db; sleep 2; done;']
+      containers:
+      - name: backend
+        image: {{ .Values.images.backend }}
+        envFrom:
+        - configMapRef:
+            name: {{ include "todo-chart.fullname" . }}-config
+        env:
+        - name: MYSQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "todo-chart.fullname" . }}-db-secret
+              key: mysql-root-password
+        - name: MY_SQL_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "todo-chart.fullname" . }}-db-secret
+              key: mysql-root-password
+        ports:
+        - containerPort: 8080
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 30
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 30
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
