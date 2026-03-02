@@ -2,24 +2,55 @@ The Todolist application has been deployed successfully!
 
 User: {{ .Values.user }}
 
-=== Quick Start ===
+=== IMPORTANT: Two-step API_BASE_URL Setup ===
 
-1. Start backend port-forward (required for browser API access):
-   kubectl port-forward svc/todo-api 3001:8080
+The frontend is a browser-based SPA, so API_BASE_URL must be an address
+reachable from the user's browser — not a cluster-internal DNS name.
 
-2. Start frontend port-forward:
+Step 1 — Deploy and get your node IP:
+
+  kubectl get nodes -o wide        # note the INTERNAL-IP or EXTERNAL-IP
+  kubectl get svc todo-api         # confirm NodePort {{ .Values.service.backendNodePort }}
+
+Step 2 — Upgrade with the correct API URL:
+
+  helm upgrade <release-name> ./todo-chart \
+    --reuse-values \
+    --set apiBaseUrl=http://<NODE-IP>:{{ .Values.service.backendNodePort }}/todos
+
+=== Access the Application ===
+
+1. Frontend (TodoList Vue):
+{{- if eq .Values.service.frontendType "LoadBalancer" }}
+   kubectl get svc todolist-vue   # wait for EXTERNAL-IP, then open http://<EXTERNAL-IP>
+{{- else }}
    kubectl port-forward svc/todolist-vue 8080:80
+   Then open: http://localhost:8080
+{{- end }}
 
-3. Open in browser: http://localhost:8080
+2. Backend API (Todo API):
+{{- if eq .Values.service.backendType "NodePort" }}
+   http://<NODE-IP>:{{ .Values.service.backendNodePort }}/todos
+{{- else if eq .Values.service.backendType "LoadBalancer" }}
+   kubectl get svc todo-api   # wait for EXTERNAL-IP, then open http://<EXTERNAL-IP>:8080/todos
+{{- else }}
+   kubectl port-forward svc/todo-api 3001:8080
+   Then open: http://localhost:3001/todos
+{{- end }}
 
-=== Verify ===
-
-  kubectl get pods
+3. Check all pods are running:
+   kubectl get pods
 
 === Configuration ===
 
   Frontend replicas: {{ .Values.replicaCount.frontend }}
   Backend replicas:  {{ .Values.replicaCount.backend }}
   Frontend service:  {{ .Values.service.frontendType }}
+  Backend service:   {{ .Values.service.backendType }}{{ if .Values.service.backendNodePort }} (NodePort {{ .Values.service.backendNodePort }}){{ end }}
   Database host:     {{ .Values.database.mysqlHost }}
   API Base URL:      {{ .Values.apiBaseUrl }}
+
+=== Install Example ===
+
+  helm install my-todo-app ./todo-chart \
+    --set secret.rootPassword=YOUR_PASSWORD

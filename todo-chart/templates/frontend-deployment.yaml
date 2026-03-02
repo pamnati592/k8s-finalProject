@@ -12,6 +12,10 @@ spec:
       labels:
         app: todo-frontend
     spec:
+      initContainers:
+      - name: wait-for-api
+        image: busybox
+        command: ['sh', '-c', 'until nc -z todo-api 8080; do echo waiting for api; sleep 2; done;']
       containers:
       - name: frontend
         image: {{ .Values.images.frontend }}

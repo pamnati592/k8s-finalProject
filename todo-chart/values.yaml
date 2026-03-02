@@ -10,7 +10,8 @@ images:
 
 service:
   frontendType: LoadBalancer
-  backendType: ClusterIP
+  backendType: NodePort
+  backendNodePort: 30080
 
 database:
   mysqlHost: "backend"
