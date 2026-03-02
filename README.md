@@ -2,7 +2,6 @@
 
 Full-stack Todolist application deployed on Kubernetes using Helm.
 
-**Student:** Pam-Netanel (211878558)
 
 ## Architecture
 
